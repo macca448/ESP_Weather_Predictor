@@ -16,7 +16,7 @@ https://github.com/G6EJD/ESP32-Weather-Forecaster
 #### OLED UI Library used  https://github.com/helmut64/OLED_SSD1306
 #### NTP mod inspiration https://www.bitsnblobs.com/network-time-using-esp8266 
 
-##Note about the BMP280 library
+## Note about the BMP280 library
 If you use a Chinese clone BMP280 sensor then you will most likely need to make a simple change to the "Adafruit_BMP280.h" file. You'll know if it's needed as the sensor won't initialise.
 The error is on line 32. The clone has a 0x76 address as default so just swap default an ALT values.
 
