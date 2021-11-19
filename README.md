@@ -13,15 +13,15 @@ https://github.com/G6EJD/ESP32-Weather-Forecaster
 #### 3: Modified the NTP config to add TZ_INFO for auto daylight time update
 #### 4: Changed the screen scroll delay in the OLEDDisplayUi.cpp library file.
 
-#### OLED UI Library used  https://github.com/helmut64/OLED_SSD1306
+#### OLED UI Library used  https://github.com/helmut64/OLED_SSD1306 NOTE: The UI library has had variable's set that are not in the linked library so I have included the modifyied version that makes my configuration along with a zip of the full set of drivers in the current version directory
 #### NTP mod inspiration https://www.bitsnblobs.com/network-time-using-esp8266 
 
 ## Note about the BMP280 library
 If you use a Chinese clone BMP280 sensor then you will most likely need to make a simple change to the "Adafruit_BMP280.h" file. You'll know if it's needed as the sensor won't initialise.
 The error is on line 32. The clone has a 0x76 address as default so just swap default an ALT values.
 
-## Work in progress (September 19 2021)
-I want to be able to have a push button for “displayOn()” and then a 5 minute time-out for “displayOff()” functions. Originally had this configured but discovered that after 2 or 3 months the display will no longer turn on. Have not done an accurate duration test but suspect it's being caused by the millis() roll-over (just under 50 days). Due to this unfinished feature (bug) have  removed adruino-timer library that was used and the millis() button de-bounce. The push-button has been swapped to a slide switch with a simple state engine to control the display so I'm not adding any timer functions. My hope is this will tell me if the error was introduced by me or it's inherent in the code or the hardware used. More to come..........
+## Work in progress (November 12 2021) update
+After speaking to the author we both argee that the millis() roll bug is likely in the UI library so some variables have been increased in size and we await the next roll of millis() (approx New Years day). I have reinstated the wake witha 3 minute screen timeout but not by a libray as originally don but simple debouce and a counter. As you will see from the new drawing I have also added a second button with it's function tested that if we still crash on millis() roll should tell me if the ketch is still running as it is a display reset. Additionally I have made use of the onboard LED for some visuals as follows: Display OFF = LED OFF, Normal Wake = LED ON Solid, at one second to millis() roll the LED will start to do a slow blink, if I need to use the screen reset and it works the LED will rapid blink till the 3 minute timeout and then screen OFF. 
 
 ### Current Wiring
 ![image](https://user-images.githubusercontent.com/20883620/142696805-5ef8fd41-6dc6-4d99-a9a7-12b45632e6bd.png)
