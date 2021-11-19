@@ -91,6 +91,7 @@ bool      wakePress = false, screenResetPress = false, screenON = true, blink = 
 uint64_t  previousTime = 0;
 const uint64_t oneSecToMillisRoll = 0xFFFFFC17;       // FFFFFC17 = 4,294,966,295 which is 1000mS before millis rollover
                                                       // FFFFFFFF = 4,294,967,295 which is when millis rolls over (49 days)
+
 // Define each of the *icons for display
 const uint8_t rain_icon[] PROGMEM = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
