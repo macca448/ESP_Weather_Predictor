@@ -24,7 +24,7 @@ The error is on line 32. The clone has a 0x76 address as default so just swap de
 I want to be able to have a push button for “displayOn()” and then a 5 minute time-out for “displayOff()” functions. Originally had this configured but discovered that after 2 or 3 months the display will no longer turn on. Have not done an accurate duration test but suspect it's being caused by the millis() roll-over (just under 50 days). Due to this unfinished feature (bug) have  removed adruino-timer library that was used and the millis() button de-bounce. The push-button has been swapped to a slide switch with a simple state engine to control the display so I'm not adding any timer functions. My hope is this will tell me if the error was introduced by me or it's inherent in the code or the hardware used. More to come..........
 
 ### Current Wiring
-![wiring_wx_debugging](https://user-images.githubusercontent.com/20883620/133909490-cddc6cdd-a888-4a68-8353-54b2fd62e451.jpg)
+![image](https://user-images.githubusercontent.com/20883620/142696805-5ef8fd41-6dc6-4d99-a9a7-12b45632e6bd.png)
 
 ### Screens Video
 [![Watch the video](https://img.youtube.com/vi/-4ZAevAfWxo/maxresdefault.jpg)](https://youtu.be/-4ZAevAfWxo)
