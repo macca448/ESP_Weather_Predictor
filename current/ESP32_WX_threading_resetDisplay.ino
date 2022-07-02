@@ -1,5 +1,10 @@
 /* 
- *  November 8th 2021
+ * June 28 2022
+ * Changed from a single loop to ESP32 threading putting original sketch functions on "Core 0" and my user functions on
+ * "Core 1". Also noted that the original display driver library I had been using is not the library that
+ * Thingpulse updates so now we are using the current version (4.3.0) from https://github.com/ThingPulse/esp8266-oled-ssd1306
+ * 
+ * November 8th 2021
  * It looks as if the bug is indeed to do with millis() rollover at 49 days when the screen is in 
  * "displayOff()" mode. What I don't know yet is if the sketch itself crashes or if it's just the display.
  * Have now added a re-initialize button for the screen and will let it crash to see if 
@@ -55,20 +60,14 @@
  */
 
 #include <SPI.h>                //Needed as I'm using and SPI OLED not I2C OLED
-//#include "SSD1306.h"          //https://github.com/helmut64/OLED_SSD1306 // For I2C Display
-#include "SSD1306Spi.h"         //https://github.com/helmut64/OLED_SSD1306 // For SPI Display
-#include "OLEDDisplayUi.h"      //https://github.com/helmut64/OLED_SSD1306
-#if defined(ESP8266)
-#include <ESP8266WiFi.h>
-#endif  // ESP8266
-#if defined(ESP32)
+//#include "SSD1306.h"          //https://github.com/helmut64/OLED_SSD1306 // For I2C Display (V4 Old library)
+#include "SSD1306Spi.h"         //https://github.com/ThingPulse/esp8266-oled-ssd1306 // For SPI Display
+#include "OLEDDisplayUi.h"      //https://github.com/ThingPulse/esp8266-oled-ssd1306
 #include <WiFi.h>
-#endif  // ESP32
 #include <WiFiUdp.h>
 #include <time.h>
 #include <Wire.h>               // Original sketch only needed Wire lib for sensor and OLED
 #include <Adafruit_BMP280.h>    // When using a Chinese clone make sure you fix default address. See notes above
-//#include <Adafruit_BMP085.h>  // If using BMP180 or BMP085 and update line:205 accordingly e.g. BME and BME or BMP and BMP 
 
 #define OLED_DC 4               // SPI OLED_DC PIN
 #define OLED_CS 5               // SPI OLED_CS PIN
@@ -88,10 +87,9 @@ uint8_t   wakeState, lastWakeState = HIGH, screenResetState, lastScreenReset = H
 uint16_t  timeout = 0;
 bool      wakePress = false, screenResetPress = false, screenON = true, blink = false,
           updateLED = true;
-uint64_t  previousTime = 0;
+uint32_t  previousTime = 0;
 const uint64_t oneSecToMillisRoll = 0xFFFFFC17;       // FFFFFC17 = 4,294,966,295 which is 1000mS before millis rollover
                                                       // FFFFFFFF = 4,294,967,295 which is when millis rolls over (49 days)
-
 // Define each of the *icons for display
 const uint8_t rain_icon[] PROGMEM = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
@@ -436,75 +434,15 @@ void wx_history_3hr() {
 FrameCallback frames[] = { drawFrame1, drawFrame2, drawFrame3, drawFrame4, drawFrame5, drawFrame6 };
 
 // how many frames are there?
-int frameCount = 6;
+uint8_t frameCount = 6;
 
 // Overlays are statically drawn on top of a frame eg. a clock
 OverlayCallback overlays[] = { msOverlay };
-int overlaysCount = 1;
+uint8_t overlaysCount = 1;
 
-void setup() { 
-  float p,t;
-  Serial.begin(115200);
-  pinMode(WAKE_PIN, INPUT_PULLUP);
-  pinMode(SCREEN_RESET_PIN, INPUT_PULLUP);
-  pinMode(LED, OUTPUT);
-  
-  if (!StartWiFi(ssid,password)) Serial.println("Failed to start WiFi Service after 20 attempts");;
-
-  /* configTime(12*3600, 0, "pool.ntp.org"); // +1hour (1*60*60=3600=+1hour) ahead for DST in the UK */
-  configTime(0, 0, NTP_SERVER); // if TZ configured
-    setenv("TZ", TZ_INFO, 1);   // for TZ and Daylight Auto change
-  time_t now = time(nullptr); 
-  delay(2000); // Wait for time to start
-
-  if (!bmp.begin()) { Serial.println("Could not find a sensor, check wiring!");}
-    else 
-  {
-    Serial.println("Found a sensor continuing");
-    while (isnan(bmp.readPressure())) { Serial.println(bmp.readPressure()); }
-  }
-
-  /* Default settings from datasheet. */
-  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
-                  
-                  
-  while (!update_time());  //Get the latest time
-  for (int i = 0; i <= 23; i++){ // At the start all array values are the same as a baseline 
-    reading[i].pressure     = read_pressure();       // A rounded to 1-decimal place version of pressure
-    reading[i].temperature  = bmp.readTemperature(); // Enabled
- //   reading[i].humidity     = bme.readHumidity();    // Although not used, but avialable
-    reading[i].wx_state_1hr = unknown;               // To begin with  
-    reading[i].wx_state_3hr = unknown;               // To begin with 
-  }                                                  // Note that only 0,5,11,17,20,21,22,23 are used as display positions
-  last_reading_hour = reading_hour;
-  wx_average_1hr = 0; // Until we get a better idea
-  wx_average_3hr = 0; // Until we get a better idea
-
-
-  // An ESP is capable of rendering 60fps in 80Mhz mode but leaves little time for anything else,
-  // run at 160Mhz mode or just set it to about 30 fps
-  ui.setTargetFPS(20);                     // @20fps it seems fine so should leave plenty of resource 
-  ui.setIndicatorPosition(BOTTOM);         // You can change this to TOP, LEFT, BOTTOM, RIGHT
-  ui.setIndicatorDirection(LEFT_RIGHT);    // Defines where the first frame is located in the bar
-  ui.setFrameAnimation(SLIDE_LEFT);        // You can change the transition that is used SLIDE_LEFT, SLIDE_RIGHT, SLIDE_UP, SLIDE_DOWN
-  ui.setFrames(frames, frameCount);        // Add frames
-  ui.setOverlays(overlays, overlaysCount); // Add overlays
-  ui.init();                               // Initialising the UI will init the display too.
-  display.flipScreenVertically();
-  display.setFont(ArialMT_Plain_10);
-  display.setTextAlignment(TEXT_ALIGN_LEFT); 
-}
-void loop() {
-  
-  int remainingTimeBudget = ui.update();
-  update_time_and_data();
-  
-  if (remainingTimeBudget > 0) {                  // Do some work here if required
-      uint64_t currentMillis = millis();
+void loop2(void *pvParameters){    // Core 1 loop - User tasks
+  while (1){
+      uint32_t currentMillis = millis();
       if(!screenON){
           wakeState = digitalRead(WAKE_PIN);
           screenResetState = digitalRead(SCREEN_RESET_PIN);
@@ -575,9 +513,76 @@ void loop() {
       lastScreenReset = screenResetState;      
       //Serial.println(time_str);
       //Serial.println(read_pressure());
-      delay(remainingTimeBudget);
   }
 }
+
+void loop1(void *pvParameters){    // Core 0 - Original loop
+  while (1) {
+    uint32_t remainingTimeBudget = ui.update();
+    update_time_and_data();
+    delay(remainingTimeBudget);
+    }
+}
+
+void setup() { 
+  float p,t;
+  Serial.begin(115200);
+  pinMode(WAKE_PIN, INPUT_PULLUP);
+  pinMode(SCREEN_RESET_PIN, INPUT_PULLUP);
+  pinMode(LED, OUTPUT);
+  
+  if (!StartWiFi(ssid,password)) Serial.println("Failed to start WiFi Service after 20 attempts");;
+
+  /* configTime(12*3600, 0, "pool.ntp.org"); // +1hour (1*60*60=3600=+1hour) ahead for DST in the UK */
+  configTime(0, 0, NTP_SERVER); // if TZ configured
+    setenv("TZ", TZ_INFO, 1);   // for TZ and Daylight Auto change
+  time_t now = time(nullptr); 
+  delay(2000); // Wait for time to start
+
+  if (!bmp.begin()) { Serial.println("Could not find a sensor, check wiring!");}
+    else 
+  {
+    Serial.println("Found a sensor continuing");
+    while (isnan(bmp.readPressure())) { Serial.println(bmp.readPressure()); }
+  }
+
+  /* Default settings from datasheet. */
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+                  
+                  
+  while (!update_time());  //Get the latest time
+  for (int i = 0; i <= 23; i++){ // At the start all array values are the same as a baseline 
+    reading[i].pressure     = read_pressure();       // A rounded to 1-decimal place version of pressure
+    reading[i].temperature  = bmp.readTemperature(); // Enabled
+ //   reading[i].humidity     = bme.readHumidity();    // Although not used, but avialable
+    reading[i].wx_state_1hr = unknown;               // To begin with  
+    reading[i].wx_state_3hr = unknown;               // To begin with 
+  }                                                  // Note that only 0,5,11,17,20,21,22,23 are used as display positions
+  last_reading_hour = reading_hour;
+  wx_average_1hr = 0; // Until we get a better idea
+  wx_average_3hr = 0; // Until we get a better idea
+
+
+  // An ESP is capable of rendering 60fps in 80Mhz mode but leaves little time for anything else,
+  // run at 160Mhz mode or just set it to about 30 fps
+  ui.setTargetFPS(20);                     // @20fps it seems fine so should leave plenty of resource 
+  ui.setIndicatorPosition(BOTTOM);         // You can change this to TOP, LEFT, BOTTOM, RIGHT
+  ui.setIndicatorDirection(LEFT_RIGHT);    // Defines where the first frame is located in the bar
+  ui.setFrameAnimation(SLIDE_LEFT);        // You can change the transition that is used SLIDE_LEFT, SLIDE_RIGHT, SLIDE_UP, SLIDE_DOWN
+  ui.setFrames(frames, frameCount);        // Add frames
+  ui.setOverlays(overlays, overlaysCount); // Add overlays
+  ui.init();                               // Initialising the UI will init the display too.
+  display.flipScreenVertically();
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  xTaskCreatePinnedToCore(loop2, "loop2", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(loop1, "loop1", 4096, NULL, 1, NULL, 0);
+}
+void loop() {}
 
 void update_time_and_data(){
   while (!update_time());
