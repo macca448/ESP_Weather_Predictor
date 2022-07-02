@@ -11,7 +11,7 @@ https://github.com/G6EJD/ESP32-Weather-Forecaster
 #### 1: Upgraded to a 2.4" OLED and changed from I2C to SPI interface. You can still use the 0.9" driver
 #### 2: Added extra screen for Room Temperature display
 #### 3: Modified the NTP config to add TZ_INFO for auto daylight time update
-#### 4: Changed the screen scroll delay in the OLEDDisplayUi.cpp library file.
+#### 4: Changed to Dual Core Threading (User functions CORE1 and FORECASTER on CORE0)
 
 #### OLED UI Library used  https://github.com/helmut64/OLED_SSD1306 NOTE: The UI library has had variable's set that are not in the linked library so I have included the modifyied version that makes my configuration along with a zip of the full set of drivers in the current version directory
 #### NTP mod inspiration https://www.bitsnblobs.com/network-time-using-esp8266 
