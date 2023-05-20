@@ -1,27 +1,43 @@
 # ESP Weather Predictor
 ESP8266 or ESP32 Weather Predictor using 128 x 64 OLED Display
 
-The core code for this project is from this Instructable
-https://www.instructables.com/ESP32ESP8266-Weather-ForecasterPredictor/ 
+The Original Author of the Weather Predicion Methods used in this sketch is David Bird  <http://g6ejd.dynu.com/> or <https://github.com/G6EJD>
 
-or can be found in this repository
-https://github.com/G6EJD/ESP32-Weather-Forecaster
+This sketch is a re-work of the above and facilitates the following
+  1.  NTP time method is in full compliance with NTP ORG "Terms of Service" https://www.ntppool.org/tos.html
+  2.  A WiFi connection is only used to update and resync time. At all other times the WiFi is disconnected and Radio is turned Off. 
+  3.  Display Page 6 has a Time stamp for the last NTP sync so it's easy to know when things aren't working
+  4.  Sketch will auto determin your ESP board type (ESP32 or ESP8266)
+  5.  The "FLASH" button (GPIO0) has been used for screen "WAKE"
+  6.  "Manditory" user settings are maked with "// ! " in the user settings section of the sketch
+  7.  This sketch is configured to use a BMP280 for Barometric Pressure and Room Temperature. It's easily adapted to a different sensor.
+  8.  Sketch was tested using: 
+      i.    Arduino IDE v1.8.19 and v2.1.0              (v2.1.0 shows some incorrect "unused parameter" warnings. You can ignor them)
+      ii.   ESP8266 v3.1.2 (Generic) board profile
+      iii.  ESP32   v2.0.9 (Generic) board profile
+      iv.   Adafruit BMP280 Library v2.6.6              (Chinese Clones may need you to change the default address to 0x76 in Adafruit_BMP280.h on line:34)
+      v.    ThingPulse v4.4.0 OLED Driver Library
+          NOTE: All libraries are available via the Arduino IDE Library Manager
 
-## Some changes I have made to this  project are</br>
-#### 1: Upgraded to a 2.4" OLED and changed from I2C to SPI interface. You can still use the 0.9" driver
-#### 2: Added extra screen for Room Temperature display
-#### 3: Modified the NTP config to add TZ_INFO for auto daylight time update
-#### 4: Changed to Dual Core Threading (User functions CORE1 and FORECASTER on CORE0)
+  9.  For more information on <sys/time.h> "strftime" function https://cplusplus.com/reference/ctime/strftime/
+  10. NTP Timezone POSIX string database https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
 
-#### OLED UI Library used  https://github.com/helmut64/OLED_SSD1306 NOTE: The UI library has had variable's set that are not in the linked library so I have included the modifyied version that makes my configuration along with a zip of the full set of drivers in the current version directory
-#### NTP mod inspiration https://www.bitsnblobs.com/network-time-using-esp8266 
+#### This sketch has been tested on ESP8266 with and I2C SSD1306 and ESP32 with SPI SSD1309
+  
 
-## Note about the BMP280 library
-If you use a Chinese clone BMP280 sensor then you will most likely need to make a simple change to the "Adafruit_BMP280.h" file. You'll know if it's needed as the sensor won't initialise.
-The error is on line 32. The clone has a 0x76 address as default so just swap default an ALT values.
+## HOW THIS SKETCH WORKS:
+  1. On boot your controller starts two constant timers "millis()" and "micros()". 
+  2. We connect to WiFi and get an NTP "Unix Epoch" time update.
+  3. <sys/time.h> then use's your "Posix" string  to convert the GMT/UDP "Epoch" to your local time and sync's the time with your controllers millis() clock.
+  4. If your "Posix" string supports it the time will be auto-corrected for "Dailight Savings Time (DST)" start and end.
+  5. The ESP's don't need time to be corrected for drift any shorter than one hour and you'd find doing it daily would be more than enough
+  6. A Time resync only occurs when the screen is OFF. You'll see the on-board LED blinking indicating time update in progress.
+  7. As noted above there is a "Last Sync" time stamp on page 6 under the temperature reading.
+  8. To further adhear to NTP ORG's "Terms of Service" a randomness has been used as per their recommendations.
+  9. The screen turns off after 3 minutes. You can adjust this in the "USER SETTINGS" section. 
+  10. Note that there is a "Duty" period for a shared timer statement. 50mS provides the debounce for the button so to calculate a screen time-out period for the macro it is "duration = count * 50" or  3 minutes = "3600 * 50 or 180,000mS". If you want say a 5 minute screen OFF period it would be (5 * 60 * 60 * 1000 /50) = 6000 (#define SCREEN_SLEEP 6000)
+11. To "WAKE" the screen press the "FLASH / BOOT" button on your ESP Dev Board. If the screen is awake and you press this button it resets the timeout count to zero.
 
-## Work in progress (November 12 2021) update
-After speaking to the author we both argee that the millis() roll bug is likely in the UI library so some variables have been increased in size and we await the next roll of millis() (approx New Years day). I have reinstated the wake with a 3 minute screen timeout but not by a libray as originally done but simple debouce and a counter. As you will see from the new drawing I have also added a second button with it's function tested that if we still crash on millis() roll it should tell me if the sketch is still running as it is a display reset. Additionally I have made use of the onboard LED for some visuals as follows: Display OFF = LED OFF, Normal Wake = LED ON Solid, at one second to millis() roll the LED will start to do a slow blink, if I need to use the screen reset and it works the LED will rapid blink till the 3 minute timeout and then screen OFF. 
 
 ### Current Wiring
 ![image](https://user-images.githubusercontent.com/20883620/142696805-5ef8fd41-6dc6-4d99-a9a7-12b45632e6bd.png)
