@@ -489,8 +489,10 @@ void updateTime(void){
     struct tm *now_tm;
     now_tm = localtime(&now);
     char buffer [60];
-    strftime (buffer,60,"%a %d-%m-%y %H:%M:%S",now_tm);         // See item #9 in header notes
+    strftime (buffer,60,"%a %d-%m-%y %H:%M:%S", now_tm);         // See item #9 in header notes
     time_str = buffer;
+    current_hour   = now_tm->tm_hour;
+    current_minute = now_tm->tm_min;
     current_second = now_tm->tm_sec;
     #ifdef PRINT
       if(current_second != lastSecond){
@@ -498,8 +500,6 @@ void updateTime(void){
         lastSecond = current_second;
       }
     #endif
-    current_hour    = now_tm->tm_hour;
-    current_minute  = now_tm->tm_min;
     return;
 }
 
@@ -569,7 +569,7 @@ void doNTP(void){
       strftime (buffer,80," NTP Sync Stamp %A, %B %d %Y %H:%M:%S [%Z]\n", now_tm);          // See item #9 in header notes
       Serial.println(buffer);
     #endif
-    random_minute = random(15, 46);
+    random_minute = random(11, 31);
     if(WiFi.status() == WL_CONNECTED){
         WiFi.disconnect(true);
         WiFi.mode(WIFI_OFF);
@@ -579,10 +579,12 @@ void doNTP(void){
     }
     char ntp_stamp[30];
     sprintf(ntp_stamp,"%02u:%02u:%02u", ntp_sync_hour, current_minute, current_second);
+    delay(500);
     if(update_epoch > previous_epoch){
       previous_epoch = update_epoch;
       sync_stamp = "Last Sync: ";
       sync_stamp += ntp_stamp;
+      delay(500);
     }else{
       sync_stamp ="Resync Fail!";
     }
@@ -653,7 +655,7 @@ void setup() {
 
 void loop() {
 
-  time_data_update();                                      //True every hour roll
+  time_data_update();                                 //True every hour roll
   
   if(screenON){
     remainingTimeBudget = ui.update();                //Disabled whenh screen is off    
@@ -683,10 +685,9 @@ void loop() {
             }
             modePress = false;
           }  //NTP update only when screen is off and on a random minute chosen on the last update
-          if(ntp_sync_hour != current_hour && 
-              current_minute >= random_minute && current_minute <= 55){  //Very random indeed to comply with pool.ntp.org
-            blink = true;                                               //Provides a visual that NTP is being Updated
-            doNTP();                                                    //this does the deed!
+          if(ntp_sync_hour != current_hour && current_minute >= random_minute){       //Very random indeed to comply with pool.ntp.org
+            blink = true;                                                             //Provides a visual that NTP is being Updated
+            doNTP();                                                                  //this does the deed!
             ledState = OFF;
             blink = false;
             updateLED = true;
