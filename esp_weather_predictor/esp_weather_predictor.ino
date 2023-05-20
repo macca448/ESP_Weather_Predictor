@@ -17,24 +17,24 @@
   Contacts:
   Email   : macca448@gmail.com
   Facebook: https://www.facebook.com/macca448
-  Github  : https://github.com/macca448
+  GitHub  : https://github.com/macca448
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////      ABOUT THIS SKETCH      ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  Original Author of the Weather Predicion Methods used in this sketch David Bird
+  Original Author of the Weather Prediction Methods used in this sketch David Bird
   <http://g6ejd.dynu.com/> or <https://github.com/G6EJD>
 
   This sketch is a re-work of the above and facilitates the following
     #1  NTP time method is in full compliance with NTP ORG "Terms of Service" https://www.ntppool.org/tos.html
-    #2  A WiFi connection is only used to update and resync time. WiFi and Radio Off at all other times
+    #2  A WiFi connection is only used to update and re sync time. WiFi and Radio Off at all other times
     #3  There is "(S or F) Last Sync" time stamp on screen 6 (S = Success, F = Fail)
     #4  Sketch will auto determin your ESP board type (ESP32 or ESP8266)
     #5  The "FLASH" button (GPIO0) has been used for screen "WAKE"
     #6  "Manditory" user settings are maked "// ! "
     #7  This sketch is using the BMP280 for Barometric Pressure and Room Temperature
-    #8  Sketch has been tested using 
+    #8  Sketch has been tested using
           i.    Arduino IDE v1.8.19 and v2.1.0              (v2.1.0 shows some incorrect "unused parameter" warnings. You can ignor them)
           ii.   ESP8266 v3.1.2 (Generic)
           iii.  ESP32   v2.0.9 (Generic)
@@ -43,24 +43,24 @@
           NOTE: All libraries are available via Arduino IDE Library Manager
 
     #9  For information on <sys/time.h> "strftime" function https://cplusplus.com/reference/ctime/strftime/
-    #10 NTP Timezone POSIX string database https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
+    #10 NTP Timezone POSIX string database https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
 
     This sketch has been tested on ESP8266 with and I2C SSD1306 and ESP32 with SPI SSD1309
 
     HOW THIS SKETCH WORKS:
-    On boot your controller starts two constant clocks "millis()" and "micros()"
-    We then connect to WiFi and get an NTP "Unix epoch" time update.
-    <sys/time.h> then use's your "Posix" string  to convert the GMT/UDP "epoch" to your local time in sync with your controllers millis() clock
-    If your "Posix" string supports it the time will be auto-corrected for "Dailight Savings Time (DST)" start and end.
-    The ESP's don't need time to be corrected for drift any shorter than one hour and you'd find doing it daily would be more than enough
-    A Time resync only occurs when the screen is OFF. You'll see the on-board LED blinking indicating time update in progress.
-    As noted above there is a "Last Sync" time stamp on page 6 under the temperature display
-    To further adhear to NTP ORG's "Terms of Service" a randomness has been used as per their recommendations.
-    The screen turns off after 3 minutes. You can adjust this in "USER SETTINGS". 
-    Note that there is a "Duty" period for a shared timer statement. 50mS provides the debounce for the button so to calculate
+    1. On boot your controller starts two constant clocks "millis()" and "micros()"
+    2. We then connect to WiFi and get an NTP "Unix epoch" time update.
+    3. <sys/time.h> then use's your "Posix" string  to convert the GMT/UDP "epoch" to your local time in sync with your controllers millis() clock
+    4. If your "Posix" string supports it the time will be auto-corrected for "Dailight Savings Time (DST)" start and end.
+    5. The ESP's don't need time to be corrected for drift any shorter than one hour and you'd find doing it daily would be more than enough
+    6. A Time re sync only occurs when the screen is OFF. You'll see the on-board LED blinking indicating time update in progress.
+    7. As noted above there is a "Last Sync" time stamp on page 6 under the temperature display
+    8. To further adhere to NTP ORG's "Terms of Service" a randomness has been used as per their recommendations.
+    9. The screen turns off after 3 minutes. You can adjust this in "USER SETTINGS".
+    Note that there is a "Duty" period for a shared timer statement. 50mS provides the denounce for the button so to calculate
     the screen time-out macro it is "duration = count * 50" or  3 minutes = "3600 * 50 or 180,000mS"
     If you want say a 5 minute screen OFF period it would be (5 * 60 * 60 * 1000 /50) = 6000 (#define SCREEN_SLEEP 6000)
-    To "WAKE" the screen press the "FLASH" button on your ESP Dev Board
+    10. To "WAKE" the screen press the "FLASH" button on your ESP Dev Board
 
 */
 
