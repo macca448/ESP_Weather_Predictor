@@ -1,10 +1,11 @@
 # ESP Weather Predictor
 ESP8266 or ESP32 Weather Predictor using 128 x 64 OLED Display
 
-The Original Author of the Weather Predicion Methods used in this sketch is David Bird  <http://g6ejd.dynu.com/> or <https://github.com/G6EJD>
+The Original Author of the Weather Predicion Methods used in this sketch is David Bird
+[http://g6ejd.dynu.com](<http://g6ejd.dynu.com/>) or [https://github.com/G6EJD](<http://g6ejd.dynu.com/>)
 
 This sketch is a re-work of the above and facilitates the following
-  1.  NTP time method is in full compliance with NTP ORG "Terms of Service" https://www.ntppool.org/tos.html
+  1.  NTP time method is in full compliance with NTP ORG "[Terms of Service](https://www.ntppool.org/tos.html)" 
   2.  A WiFi connection is only used to update and resync time. At all other times the WiFi is disconnected and Radio is turned Off. 
   3.  Display Page 6 has a Time stamp for the last NTP sync so it's easy to know when things aren't working
   4.  Sketch will auto determin your ESP board type (ESP32 or ESP8266)
@@ -19,8 +20,8 @@ This sketch is a re-work of the above and facilitates the following
       v.    ThingPulse v4.4.0 OLED Driver Library
           NOTE: All libraries are available via the Arduino IDE Library Manager
 
-  9.  For more information on <sys/time.h> "strftime" function https://cplusplus.com/reference/ctime/strftime/
-  10. NTP Timezone POSIX string database https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
+  9.  For more information on <[sys/time.h]( https://cplusplus.com/reference/ctime/strftime/)> "strftime" function click [here](https://cplusplus.com/reference/ctime/strftime/)
+  10. NTP Timezone POSIX string [database](https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv) https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
 
 #### This sketch has been tested on ESP8266 with and I2C SSD1306 and ESP32 with SPI SSD1309
   
@@ -39,8 +40,17 @@ This sketch is a re-work of the above and facilitates the following
 11. To "WAKE" the screen press the "FLASH / BOOT" button on your ESP Dev Board. If the screen is awake and you press this button it resets the timeout count to zero.
 
 
-### Current Wiring
-![image](https://user-images.githubusercontent.com/20883620/142696805-5ef8fd41-6dc6-4d99-a9a7-12b45632e6bd.png)
+### Wiring Guide ESP32 I2C SSD1306
+![I2C ESP32 SSD1306](https://github.com/macca448/ESP_Weather_Predictor/blob/main/esp_weather_predictor/assets/ESP32_OLED_I2C.png)
+
+
+### Wiring Guide ESP32 I2C SSD1306
+![SPI ESP32 SSD1309](https://github.com/macca448/ESP_Weather_Predictor/blob/main/esp_weather_predictor/assets/OLED_SPI_BMP_ESP32.png)
+
 
 ### Screens Video
 [![Watch the video](https://img.youtube.com/vi/-4ZAevAfWxo/maxresdefault.jpg)](https://youtu.be/-4ZAevAfWxo)
+
+ 
+
+ 	
