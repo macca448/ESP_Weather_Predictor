@@ -4,13 +4,13 @@ ESP8266 or ESP32 Weather Predictor using 128 x 64 OLED Display
 The Original Author of the Weather Predicion Methods used in this sketch is David Bird
 [http://g6ejd.dynu.com](<http://g6ejd.dynu.com/>) or [https://github.com/G6EJD](<http://g6ejd.dynu.com/>)
 
-This sketch is a re-work of the above and facilitates the following
+## This sketch is a re-work of the above and facilitates the following
   1.  NTP time method is in full compliance with NTP ORG "[Terms of Service](https://www.ntppool.org/tos.html)" 
-  2.  A WiFi connection is only used to update and resync time. At all other times the WiFi is disconnected and Radio is turned Off. 
+  2.  The WiFi connection is only used to update time. At all other times the WiFi is disconnected and the radio is turned Off. 
   3.  Display Page 6 has a Time stamp for the last NTP sync so it's easy to know when things aren't working
   4.  Sketch will auto determin your ESP board type (ESP32 or ESP8266)
-  5.  The "FLASH" button (GPIO0) has been used for screen "WAKE"
-  6.  "Manditory" user settings are maked with "// ! " in the user settings section of the sketch
+  5.  The "FLASH / BOOT" button (GPIO0) is used for screen "WAKE"
+  6.  "Manditory" user settings are maked with " ! " in the "USER SETTINGS" section of the sketch
   7.  This sketch is configured to use a BMP280 for Barometric Pressure and Room Temperature. It's easily adapted to a different sensor.
   8.  Sketch was tested using: 
       i.    Arduino IDE v1.8.19 and v2.1.0              (v2.1.0 shows some incorrect "unused parameter" warnings. You can ignor them)
@@ -21,7 +21,11 @@ This sketch is a re-work of the above and facilitates the following
           NOTE: All libraries are available via the Arduino IDE Library Manager
 
   9.  For more information on <[sys/time.h]( https://cplusplus.com/reference/ctime/strftime/)> "strftime" function click [here](https://cplusplus.com/reference/ctime/strftime/)
-  10. NTP Timezone POSIX string [database](https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv) https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+  10. NTP Timezone POSIX string [database](https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv)
+
+
+#### ESP8266 and ESP32 OLED Driver from ThingPulse IDE Install Screen
+![ThingPulse](https://github.com/macca448/ESP_Weather_Predictor/blob/main/esp_weather_predictor/assets/thingpulse_library.png)
 
 #### This sketch has been tested on ESP8266 with and I2C SSD1306 and ESP32 with SPI SSD1309
   
