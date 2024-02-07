@@ -69,8 +69,8 @@
 ///////////////////////////////////////////////////////////   USER SETTINGS   /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define MY_SSID       "MillFlat_El_Rancho"                // ! Enter Your WiFi SSID Details
-#define MY_PASS       "140824500925"                      // ! Enter Your WiFi Password
+#define MY_SSID       "YOUR_SSID"                         // ! Enter Your WiFi SSID Details
+#define MY_PASS       "YOUR_PASSWORD"                     // ! Enter Your WiFi Password
 
 //#define PRINT                                           // Uncomment to use Serial Print for de-bugging or to get a Serial Monitor Clock
 
