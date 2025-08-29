@@ -1,6 +1,15 @@
 # ESP Weather Predictor
 ESP8266 or ESP32 Weather Predictor using 128 x 64 OLED Display
 
+#### Update 30th August 2025
+The SSD1309 seems to corrupt frames after several months. AI suggests this is a common issue and gave several reasons as to how it happens.
+
+The fix applied (threaded ESP32 version) has a dual purpose button
+  *  Short press less than 1000mS is the Wake Screen function as before
+  *  Long press greater than 1000mS does a hardware reset to the display only
+The reasoning is you need not harware reset untill you note corrupted frames.
+#### End update
+
 The Original Author of the Weather Prediction Methods used in this sketch is David Bird
 [http://g6ejd.dynu.com](<http://g6ejd.dynu.com/>) or [https://github.com/G6EJD](<http://g6ejd.dynu.com/>)
 
