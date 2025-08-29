@@ -82,7 +82,7 @@
 #define TRANS_TIME    400                                 // The duration to change to the next page
 #define FPS           20                                  // OLED Display Frame Rate
 
-#define WAKE_PIN      39                                  // Wake display or zero display off time-out counter
+#define WAKE_PIN      0                                   // Wake display or zero display off time-out counter
 #define RAN_PIN       A0                                  // To generate a random minute to sync NTP
 #define RAN_MIN       71
 #define RAN_MAX       87
@@ -141,7 +141,8 @@ Adafruit_BME280 bme;   //BMP Sensor object
 #define icon_width  40
 #define icon_height 40
 
-#define     DUTY_CYCLE 50     // For de-bouncing the buttons and to create the screen timeout (see line above)
+#define  DUTY_CYCLE  50     // For de-bouncing the buttons and to create the screen timeout (see line above)
+#define LONGPRESS_MS 1000
 
 const bool  look_3hr = true, look_1hr = false;
 String      weather_text, weather_extra_text;
@@ -155,9 +156,10 @@ struct STRUCT2{
   uint8_t   minCount;
   uint8_t   lastMinute;
   uint8_t   randomMinute;
-  bool      modePress = false;
-  bool      modeState;
-  bool      lastModeState = HIGH;
+  uint16_t  btnCounter = 0;
+  bool      btnHandled = false;
+  bool      modeState = false;
+  bool      lastModeState = false;
   bool      screenON = true;
   String    sync_stamp = "";
 }core_2;
@@ -548,39 +550,84 @@ void data_update(void){
   return; 
 }
 
+void shortPress(void) {
+  if(!core_2.screenON){
+    core_2.timeout = 0;
+    //display.resetDisplay();
+    display.displayOn();            
+    ui.switchToFrame(0);
+    ui.update();
+    core_2.screenON = true;
+    digitalWrite(LED, ON);
+  }
+  return;
+}
+
+// === Your reset helper ===
+void longPress(void){
+  display.init();        // hard reset the SSD1309
+  display.flipScreenVertically();
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  core_2.timeout = 0;
+  core_2.screenON = true;
+  digitalWrite(LED, ON);
+  ui.switchToFrame(0);   // back to a known page (optional)
+  ui.update();           // force redraw
+  return;
+}
+
+// === Button task (called every 50ms) ===
+void buttonTask(void) {
+  bool raw = !digitalRead(WAKE_PIN); // active LOW
+
+  if (raw == core_2.lastModeState) {
+    if (core_2.modeState != raw) {
+      core_2.modeState = raw;
+      if (core_2.modeState) {
+        // just pressed
+        core_2.btnCounter = 0;
+        core_2.btnHandled = false;
+      } else {
+        // just released
+        if (!core_2.btnHandled) {
+          if (core_2.btnCounter * DUTY_CYCLE < LONGPRESS_MS) {
+            shortPress();
+          } else {
+            longPress();
+          }
+        }
+      }
+    } else {
+      // stable and pressed
+      if (core_2.modeState) {
+        core_2.btnCounter++;
+        if (!core_2.btnHandled && (core_2.btnCounter * DUTY_CYCLE >= LONGPRESS_MS)) {
+          longPress();
+          core_2.btnHandled = true;
+        }
+      }
+    }
+  }
+  core_2.lastModeState = raw;
+  return;
+}
+
 void loop2(void *pvParameters){    // Core 1 loop - User tasks
   while (1){
-    core_2.modeState = digitalRead(WAKE_PIN); 
-      if(core_2.modeState != core_2.lastModeState){
-        core_2.previousTime = millis();
-        core_2.modePress = true;
-      }
       //Duty Cycle Events
       if(millis() - core_2.previousTime >= DUTY_CYCLE){          
-        if(!core_2.screenON){
-          if(core_2.modePress){
-            if(core_2.modeState == LOW){                  
-              core_2.timeout = 0;              
-              //ui.enableAutoTransition();
-              //ui.setAutoTransitionForwards();
-              //display.end();
-              display.clear();
-              display.resetDisplay();
-              display.displayOn();              
-              core_2.screenON = true;
-              digitalWrite(LED, ON);                      
-            }
-            core_2.modePress = false;
+        core_2.previousTime += DUTY_CYCLE;
+        buttonTask();
+          if(core_2.screenON){
+            core_2.timeout++;
+              if(core_2.timeout >= SCREEN_SLEEP){
+                //display.clear();
+                display.displayOff();
+                core_2.screenON = false;
+                digitalWrite(LED, OFF);
+              }
           }
-        }else if(core_2.screenON){
-          core_2.timeout++;
-            if(core_2.timeout >= SCREEN_SLEEP){              
-              display.displayOff();
-              core_2.screenON = false;
-              digitalWrite(LED, OFF);
-            }
-        }
-        core_2.previousTime = millis();
       }
       if(rtc.getMinute() != core_2.lastMinute){
         core_2.minCount++;
@@ -602,12 +649,11 @@ void loop2(void *pvParameters){    // Core 1 loop - User tasks
         core_2.last_reading_hour = rtc.getHour(true);
         data_update();
       }
-    core_2.lastModeState = core_2.modeState;
-    delay(1);
+      delay(1);
   }
 }
 
-void loop1(void *pvParameters){    // Core 1 loop - User tasks
+void loop1(void *pvParameters){    // Core 0 loop - User tasks
   while (1){
     int remainingTimeBudget = ui.update();  
       if(remainingTimeBudget > 0){
@@ -621,7 +667,7 @@ void setup() {
   #ifdef PRINT
     Serial.begin(115200);
   #endif
-  pinMode(WAKE_PIN, INPUT_PULLUP);
+  pinMode(WAKE_PIN, INPUT);
   pinMode(LED, OUTPUT);
   digitalWrite(LED, ON);
   randomSeed(analogRead(RAN_PIN));                        //To generate a random minute for NTP resync
